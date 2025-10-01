@@ -7,11 +7,13 @@ find_package(ROOT REQUIRED COMPONENTS Core RIO Net)
 
 set(sources 
     MontecarloIntegrate.cpp
+    compute_unitball_volume.cpp
     integrate.cpp
 )
 
 set(include 
     MontecarloIntegrate.hpp
+    compute_unitball_volume.hpp
 )
 
 add_executable(integrate ${sources} ${include})
