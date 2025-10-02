@@ -41,16 +41,10 @@ struct IntegrationResult_t{
     }
 }; 
 
-IntegrationResult_t MontecarloIntegrate( 
-
-    //number of points to use in the integration 
-    const unsigned long int n_pts, 
-    
-    //number of dimensions is given by the number of bounds given. 
-    const std::vector<IntegrationBound_t> bounds, 
-    
-    //fcn to integrate. must accept (CONST) ptr to doubles.               
-    std::function<bool(const double*)> fcn         
+IntegrationResult_t MontecarloIntegrate(
+    const unsigned long int n_pts,                  //number of points to use in the integration 
+    const std::vector<IntegrationBound_t> bounds,   //number of dimensions is given by the number of bounds given.  
+    std::function<bool(const double*)> fcn          //fcn to integrate. must accept (CONST) ptr to doubles.  
 ); 
 
 
