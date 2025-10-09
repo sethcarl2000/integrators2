@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
     if (argc > 1) plots_to_make = string(argv[1]); 
 
     //optionally, specify the path on the command line: 
-    const char* path_graphic = "convergence.png"; 
+    const char* path_graphic = "test.png"; 
     if (argc > 2) path_graphic = argv[2];  
 
     //
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
         //number of times we re-evaluate the integral for each point. 
         // the 'statistical error' will be defined as the stddev of the results 
         // for each separate 'n_integ_pts' value
-        const int n_evals_per_pt = 50; 
+        const int n_evals_per_pt = 10; 
 
         //each time, we will multiply by 2. 
         // so the final number of points is = n_integ_pts * pow( 2, n_eval_levels-1 )
@@ -244,28 +244,173 @@ int main(int argc, char* argv[])
         canv->SaveAs(path_graphic); 
         return 0; 
     }   
+    //______________________________________________________________________________________
 
-    cout << "grid integrate: " << flush; 
+    /* 
+    //______________________________________________________________________________________
+    if (plots_to_make=="methods") {
 
-    auto ret = GridIntegrate(500, {
-        {-1., 1.},
-        {-1., 1.},
-        {-1., 1.}
-    }, generate_inside_unitball_fcn(3));
+        const vector<int> dims = {3, 5, 10}; 
 
-    double X5d[] = {0., 0., 0., 0., 2.}; 
-    auto fcn_5 = generate_inside_unitball_fcn(5); 
-    cout << "is inside? " << std::boolalpha << fcn_5(X5d) << endl; 
+        auto canv = new TCanvas("c", "canv", 1400, 800); 
+        canv->Divide(dims.size(), 2); 
 
-    cout << ret.val << endl; 
+        //starting number of points to integrate with
+        const unsigned long int n_integ_pts_0 = 64; 
 
-    cout << "real value: " << 4.18879020479 << endl; 
+        //number of times we re-evaluate the integral for each point. 
+        // the 'statistical error' will be defined as the stddev of the results 
+        // for each separate 'n_integ_pts' value
+        const int n_evals_per_pt = 50; 
+
+        //each time, we will multiply by 2. 
+        // so the final number of points is = n_integ_pts * pow( 2, n_eval_levels-1 )
+        int n_eval_levels = 19; 
+
+        //size of the spheres, and the offset of their centers 
+        const double sphere_1_rad = 1.; 
+        const double sphere_2_rad = 0.5; 
+        const double sphere_sep   = 1.; 
+
+        int i_canv=1; 
+        for (const int dim : dims) {
+            
+            double min_y{+1.e30}, max_y{-1.e30}; 
+            double max_stddev{0.};
+
+            printf("evaluating %id sphere...\n", dim); 
+
+            vector<double> graphPts_npts; 
+            struct GraphPoints_t { vector<double> mean, stddev; };
+            
+            GraphPoints_t pts_pseudo, pts_quasi, pts_grid; 
+
+            unsigned long int n_integ_pts = n_integ_pts_0; 
+            
+            for (int i=0; i<n_eval_levels; i++) {
+
+                //now, actually eval the integral a given number of times
+                vector<double> vals_pseudo, vals_quasi, vals_grid; 
 
 
-    //if we got here, something went wrong. 
-    fprintf(stderr, "Error: optional first arg passed is invalid: "
-                    "'%s'. must be either 'convergence' or 'methods'.\n", plots_to_make.c_str()); 
-    return -1; 
+                for (int n=0; n<n_evals_per_pt; n++) {
+
+                    double volume = compute_sphere_overlap(
+                        dim, 
+                        n_integ_pts, 
+                        sphere_1_rad, 
+                        sphere_2_rad, 
+                        sphere_sep
+                    ); 
+                }
+
+                //now, compute the stddev and mean
+                double mean, stddev; 
+                compute_vector_stddev_mean(vals, mean, stddev); 
+
+                if (!(mean == 0. && stddev == 0.)) {
+                    graphPts_npts       .push_back(sqrt(n_integ_pts)); 
+                    graphPts_vol_mean   .push_back(mean); 
+                    graphPts_vol_stdddev.push_back(stddev);
+                } 
+                
+                printf("  npts = %8li, vol %.4e +/- %.4e", 
+                    n_integ_pts, 
+                    mean, 
+                    stddev
+                ); 
+                cout << endl; 
+
+                //find the min and max y-vals in the dataset 
+                min_y = min<double>( mean - stddev, min_y ); 
+                max_y = max<double>( mean + stddev, max_y ); 
+
+                max_stddev = max<double>( stddev, max_stddev );
+
+
+                //double the number of stone-throwing tries
+                n_integ_pts *= 2; 
+            }
+            
+            //now we're done evaluating all points. 
+            vector<double> x_errors(n_eval_levels, 0.); 
+
+            auto graph_vals = new TGraphErrors(
+                graphPts_npts.size(),
+                
+                graphPts_npts.data(),
+                graphPts_vol_mean.data(),
+
+                x_errors.data(),
+                graphPts_vol_stdddev.data()
+            ); 
+
+            auto graph_errors = new TGraph(
+                graphPts_npts.size(),
+
+                graphPts_npts.data(),
+                graphPts_vol_stdddev.data()
+            );
+
+            //draw the graph of calculated volume values
+            canv->cd(i_canv); 
+            gPad->SetLogx(1); 
+            gPad->SetLeftMargin(0.15);
+            gPad->SetRightMargin(0.0); 
+
+            //how much to extend the y-axis by (in a fraction of the total amplitude) 
+            const double y_buffer = 0.1; 
+
+            auto hist_frame = gPad->DrawFrame(
+                sqrt(n_integ_pts_0 * 0.5), 
+                min_y - y_buffer*(max_y - min_y),
+
+                sqrt(n_integ_pts_0 * pow( 2, n_eval_levels ) * 2),
+                max_y + y_buffer*(max_y - min_y)
+            );  
+
+            hist_frame->SetTitle(Form(
+                "%id (r_{1}= %.1f, r_{2}= %.1f, a= %.1f);"     //title
+                "#sqrt{N. integration pts};"                   //x-axis    
+                "volume (mean & std.dev. of %i trials)",       //y-axis    
+                dim, sphere_1_rad, sphere_2_rad, sphere_sep, n_evals_per_pt
+            ));        
+
+            graph_vals->Draw("SAME"); 
+
+
+            //draw the graph of statistical errors
+            canv->cd(i_canv + dims.size()); 
+            gPad->SetLogx(1); 
+            gPad->SetLeftMargin(0.15);
+            gPad->SetRightMargin(0.0); 
+            gPad->SetTopMargin(0.05);
+
+
+            hist_frame = gPad->DrawFrame(
+                sqrt(n_integ_pts_0 * 0.5), 
+                0.,
+
+                sqrt(n_integ_pts_0 * pow( 2, n_eval_levels ) * 2),
+                max_stddev * (1. + y_buffer)
+            );  
+
+            hist_frame->SetTitle(Form(
+                ";"                            //title
+                "#sqrt{N. integration pts};"   //x-axis    
+                "std.dev of %i trials",        //y-axis    
+                n_evals_per_pt
+            ));        
+
+            graph_errors->Draw("SAME");
+
+            i_canv++; 
+        }
+
+        canv->SaveAs(path_graphic); 
+        return 0; 
+    }*/ 
+
 
     return 0; 
 }

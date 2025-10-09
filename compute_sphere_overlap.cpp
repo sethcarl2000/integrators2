@@ -5,7 +5,11 @@
 
 #include "compute_sphere_overlap.hpp"
 #include "ValueWithError.hpp"
+
+//integrators we can use
 #include "MontecarloIntegrate.hpp"
+#include "SobolIntegrate.hpp"
+#include "GridIntegrate.hpp"
 
 using namespace std; 
 
@@ -15,13 +19,14 @@ ValueWithError_t<double> compute_sphere_overlap(
     const long unsigned int N, 
     const double R1, 
     const double R2, 
-    const double sep 
+    const double sep,
+    IntegratorType integrator_type
 ) 
 {   
     //check some basic constraints
     if (!(R1 > 0. && R2 > 0. && sep >= 0. && R1 >= R2)) {
         ostringstream oss; 
-        oss << "in <compute_sphere_overlap>: R1 (" << R1 << "), R1 (" << R2 
+        oss << "in <compute_spheres_overlap>: R1 (" << R1 << "), R1 (" << R2 
             << "), or sep (" << sep << ") is invalid; they must all be positive, and R1 >= R2!";    
         throw invalid_argument(oss.str()); 
         return ValueWithError_t<double>{}; 
@@ -69,5 +74,14 @@ ValueWithError_t<double> compute_sphere_overlap(
     for (int i=1; i<dimenison; i++) bounds.push_back({ -R1, R1 }); 
 
     //now, we are ready to do the integration 
-    return MontecarloIntegrate(N, bounds, is_inside_both_spheres); 
+    ValueWithError_t<double> result; 
+
+    //check which integrator we're using
+    switch (integrator_type) {
+        case (kMontecarlo)  : result = MontecarloIntegrate(N, bounds, is_inside_both_spheres); break;
+        case (kQuasirandom) : result = SobolIntegrate(N, bounds, is_inside_both_spheres); break; 
+        case (kGrid)        : result = GridIntegrate(N, bounds, is_inside_both_spheres); break; 
+    }
+    
+    return result; 
 }

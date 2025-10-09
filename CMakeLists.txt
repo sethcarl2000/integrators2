@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.8)
 
 project(Integrators2 VERSION 0.0 LANGUAGES CXX)
 
-find_package(ROOT REQUIRED COMPONENTS Core RIO Net)
+find_package(ROOT REQUIRED COMPONENTS Core RIO Net Physics Math)
 
 set(CMAKE_CXX_STANDARD
     17
@@ -19,6 +19,7 @@ set(sources
     GridIntegrate.cpp
     compute_unitball_volume.cpp
     compute_sphere_overlap.cpp
+    SobolIntegrate.cpp
 )
 
 set(include 
@@ -28,6 +29,7 @@ set(include
     compute_sphere_overlap.hpp
     ValueWithError.hpp
     IntegrationBound.hpp
+    SobolIntegrate.hpp
 )
 
 #-------------------------------------------------
