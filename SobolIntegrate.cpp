@@ -4,8 +4,19 @@
 #include <iostream> 
 #include <thread>
 #include <Math/QuasiRandom.h>
+#include <chrono>
+#include <random> 
 
 using namespace std; 
+using QRS = ROOT::Math::QuasiRandomSobol; 
+
+// A generalized monte-carlo integration tool 
+
+//this is kinda a hacky way to do this, but its how we can have our 
+// generators skip an aribtrary number of 'pairs' in the sequence each time, 
+// without waisting any. 
+static std::map<int, std::unique_ptr<ROOT::Math::QuasiRandomSobol>> sobol_generators{}; 
+
 
 ValueWithError_t<double> SobolIntegrate(
     const unsigned long int n_pts,                  //number of points to use in the integration. 
@@ -17,12 +28,25 @@ ValueWithError_t<double> SobolIntegrate(
     //dimension of the space we're integrating in 
     const int dim = (int)bounds.size(); 
 
-    //create the Sobol sequence generator
-    auto sobol = new ROOT::Math::GSLQRngSobol(); 
-    sobol->Initialize(dim); 
+    //look to see if a sobol generator of this dimension already exists 
+    auto it = sobol_generators.find(dim); 
+
+    QRS* sobol = nullptr; 
+
+    if (it == sobol_generators.end()) {
+        //we need to make a new one; none exists yet 
+        sobol_generators[dim] = unique_ptr<QRS>(
+            new QRS(dim)
+        ); 
+        
+        sobol = sobol_generators[dim].get(); 
+    } else {
+        //one already exists; let's use it    
+        sobol = it->second.get(); 
+    }   
 
 
-    
+
     //create an array of ints, which represents the 'point' in space we're using. 
     vector<double> point(dim, 0.);
 
@@ -30,7 +54,7 @@ ValueWithError_t<double> SobolIntegrate(
     
     for (unsigned long int i=0; i<n_pts; i++) {
 
-        sobol->GenerateArray(&point.front(), &point.back()); 
+        sobol->Next(point.data()); 
 
         //check the fcn at our current Sobol point
         if (fcn(point.data())) count++;    

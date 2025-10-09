@@ -80,7 +80,7 @@ ValueWithError_t<double> compute_sphere_overlap(
     switch (integrator_type) {
         case (kMontecarlo)  : result = MontecarloIntegrate(N, bounds, is_inside_both_spheres); break;
         case (kQuasirandom) : result = SobolIntegrate(N, bounds, is_inside_both_spheres); break; 
-        case (kGrid)        : result = GridIntegrate(N, bounds, is_inside_both_spheres); break; 
+        case (kGrid)        : result = GridIntegrate(1 + (unsigned long int)pow(N, 1./((double)bounds.size())), bounds, is_inside_both_spheres); break; 
     }
     
     return result; 

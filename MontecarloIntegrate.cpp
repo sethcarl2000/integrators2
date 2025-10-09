@@ -17,13 +17,13 @@ ValueWithError_t<double> MontecarloIntegrate(
     const int dim = (int)bounds.size(); 
 
     //get the number of threads we have to work with
-    const int n_threads = std::thread::hardware_concurrency(); 
+    const long unsigned int n_threads = std::thread::hardware_concurrency(); 
 
     //initialize the vector of sub-results
-    vector<unsigned long int> sub_counts(n_threads); 
+    vector<unsigned long int> sub_counts(n_threads, 0); 
 
     //this way, we will have **just over** n_pts pts total
-    const int n_pts_per_thread = (n_pts / n_threads) + 1;
+    const long unsigned int n_pts_per_thread = (n_pts / n_threads) + 1;
 
     //make the vector of threads
     vector<thread> threads; 
@@ -76,9 +76,9 @@ ValueWithError_t<double> MontecarloIntegrate(
     double total_vol{1.}; 
     for (auto bound : bounds) total_vol *= (bound.xmax - bound.xmin);
 
-    double result = total_vol * ((double)count) / ((double)n_pts); 
+    double result = total_vol * ((double)count) / ((double)(n_pts + n_threads)); 
     //very rudimentary error estimate
-    double error  = total_vol * (sqrt((double)count) / ((double)n_pts)); 
+    double error  = total_vol * (sqrt((double)count) / ((double)(n_pts + n_threads))); 
 
     return ValueWithError_t<double>{ result, error }; 
 }

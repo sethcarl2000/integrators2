@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.8)
 
 project(Integrators2 VERSION 0.0 LANGUAGES CXX)
 
-find_package(ROOT REQUIRED COMPONENTS Core RIO Net Physics Math)
+find_package(ROOT REQUIRED COMPONENTS Core RIO Net Physics MathMore)
 
 set(CMAKE_CXX_STANDARD
     17

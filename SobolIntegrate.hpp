@@ -8,8 +8,9 @@
 #include <vector> 
 #include "ValueWithError.hpp"
 #include "IntegrationBound.hpp"
-
-// A generalized monte-carlo integration tool 
+#include <Math/QuasiRandom.h>
+#include <map> 
+#include <memory> 
 
 ValueWithError_t<double> SobolIntegrate(
     const long unsigned int npts,                   //number of points to use in the quasai-random sequence 
