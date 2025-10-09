@@ -6,6 +6,7 @@
 #include <vector> 
 #include <cstdio> 
 #include <iostream> 
+#include "ValueWithError.hpp"
 
 using namespace std; 
 
@@ -41,8 +42,6 @@ void compute_unitball_volume(const int n_dim_min, const int n_dim_max, const cha
     auto tf1 = new TF1("volume", "pow(TMath::Pi(), x/2.)/ROOT::Math::tgamma(x/2. + 1.)", n_dim_min, n_dim_max); 
 
     auto canv = new TCanvas; 
-
-    //gPad->SetLogy(1); 
     
     graph->SetTitle("Volume of unit (R=1) N-ball;dimension;volume"); 
 

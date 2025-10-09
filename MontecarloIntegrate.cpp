@@ -3,16 +3,14 @@
 #include <chrono> 
 #include <iostream> 
 #include <thread>
+#include "ValueWithError.hpp"
 
 using namespace std; 
 
-IntegrationResult_t MontecarloIntegrate(
-    //number of points to use in the integration 
-    const unsigned long int n_pts,
-    //number of dimensions is given by the number of bounds given. 
-    const std::vector<IntegrationBound_t> bounds,
-    //fcn to integrate. must accept (CONST) ptr to doubles. returns TRUE if inside region, FALSE if not.               
-    std::function<bool(const double*)> fcn
+ValueWithError_t<double> MontecarloIntegrate(
+    const unsigned long int n_pts,                  //number of points to use in the integration 
+    const std::vector<IntegrationBound_t> bounds,   //number of dimensions is given by the number of bounds given. 
+    std::function<bool(const double*)> fcn          //fcn to integrate. must accept (CONST) ptr to doubles. returns TRUE if inside region, FALSE if not.               
 )
 {   
     //dimension of the space we're integrating in 
@@ -42,7 +40,7 @@ IntegrationResult_t MontecarloIntegrate(
             // by default be initialized to 0. 
             sub_count = 0; 
             
-            //  --- now, actually compute the volume by picking random points --- 
+            // --- now, actually compute the volume by picking random points --- 
             //this will seed our random-number generators 
             random_device rd; 
 
@@ -82,6 +80,6 @@ IntegrationResult_t MontecarloIntegrate(
     //very rudimentary error estimate
     double error  = total_vol * (sqrt((double)count) / ((double)n_pts)); 
 
-    return IntegrationResult_t{ .is_valid=true, .val=result, .error=error }; 
+    return ValueWithError_t<double>{ result, error }; 
 }
 
