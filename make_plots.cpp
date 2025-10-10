@@ -17,6 +17,7 @@
 #include <vector> 
 #include <functional> 
 #include <TLegend.h> 
+#include <Math/SpecFuncMathCore.h>
 
 using namespace std; 
 
@@ -276,6 +277,8 @@ int main(int argc, char* argv[])
 
         int i_canv=1; 
         for (const int dim : dims) {
+
+            const double vol_analytical = pow( TMath::Pi(), ((double)dim)/2. ) / ROOT::Math::tgamma( 1. + ((double)dim)/2. ); 
             
             double min_y{+1.e30}, max_y{-1.e30}; 
             double max_stddev{0.};
@@ -299,6 +302,8 @@ int main(int argc, char* argv[])
                         sphere_sep, type
                     ); 
 
+                    volume = (volume - vol_analytical)/vol_analytical; 
+
                     vals.push_back(volume); 
                 }
                 //now, compute the stddev and mean
@@ -310,8 +315,8 @@ int main(int argc, char* argv[])
                 points.stddev  .push_back(stddev); 
                 
                 //find the min and max y-vals in the dataset 
-                min_y = min<double>( mean - stddev, min_y ); 
-                max_y = max<double>( mean + stddev, max_y ); 
+                min_y = min<double>( (mean - stddev), min_y ); 
+                max_y = max<double>( (mean + stddev), max_y ); 
 
                 max_stddev = max<double>( stddev, max_stddev );
             }; 
@@ -366,7 +371,7 @@ int main(int argc, char* argv[])
             hist_frame->SetTitle(Form(
                 "unit %i-ball volume;"     //title
                 "#sqrt{N. integration pts};"                   //x-axis    
-                "volume (mean & std.dev. of %i trials)",       //y-axis    
+                "relative error of computed volume (mean & std.dev. of %i trials)",       //y-axis    
                 dim, n_evals_per_pt
             ));        
             
@@ -399,7 +404,7 @@ int main(int argc, char* argv[])
             legend->AddEntry(g_pseudo,  "pseudo");
             legend->AddEntry(g_quasi,   "quasi");
             legend->AddEntry(g_grid,    "grid");
-            legend->Draw(); 
+            if (i_canv<2) legend->Draw(); 
 
             i_canv++; 
         }
