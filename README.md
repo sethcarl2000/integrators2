@@ -1,11 +1,28 @@
 # integrators2
 
-Starter code and examples for MC integration exercise.
+## How it works
 
-See also:
+### Functions
+There are generic pseudo-random, quasi-random, and grid-based integrators which work for generic functions, in ```MontecarloIntegrate.cpp```, ```SobolIntegrate.cpp``` and ```GridIntegrate.cpp``` respectivley. The function ```compute_sphere_overalp()``` can use any of these methods to compute the overlap of two offset hyperspheres.  
 
-  * https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.qmc.Sobol.html
-  * https://root.cern.ch/doc/master/quasirandom_8C_source.html
+### executables
+the ```ndcrescent``` executable can be passed arguments on the command line: 
+
+```bash
+$> ./ndcrescent 10 1e7 1.0 0.5 1.0
+```
+
+the ```make_plots``` executable creates both ```convergence.png``` and ```methods.png```, by using the command line option 
+```
+$> ./make_plots convergence
+```
+or 
+```
+$> ./make_plots methods
+```
+
+
+Which would compute the overlap between two 10-balls, with radii 1.0 and 0.5, whose centers are offset by 1.0 (using the stone-throwing method, with 10^7 points). 
 
 
 # How to compile / run components: 
